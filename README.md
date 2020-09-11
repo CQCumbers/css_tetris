@@ -7,6 +7,4 @@ This project was inspired by CSS Sweeper, a minesweeper game written using the s
 
 ## Todo List
 - Fix indirect operand access (check pc=13)
-- Allow users to poke RAM bits directly
 - Record timelapse of Tetris being played
-- Setup Github Pages hosting

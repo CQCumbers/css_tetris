@@ -1,9 +1,7 @@
-"""
 for i in range(71):
     for j in range(16):
-        print(f'<input type="checkbox" id="t{i}_{j}">')
+        print(f'<input type="checkbox" id="At{i}_{15 - j}">')
     print('')
-"""
 
 """
 for i in range(33):
@@ -14,7 +12,9 @@ for i in range(33):
     print('</g>')
 """
 
+"""
 for i in range(71):
     for j in range(16):
         print(f'<label for="t{i}_{j}" id="l{i}_{j}">WORD {i:02} BIT {j:02}</label>')
     print('')
+"""

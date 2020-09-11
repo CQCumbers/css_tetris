@@ -287,12 +287,16 @@ def emit_ram_out(out, mux, ramlen):
 
 
 if __name__ == '__main__':
-    # hide toggles, style and position labels
-    print('input[type="checkbox"] { display: none; }')
+    # style and position labels
     fonts = 'Consolas, "Liberation Mono", Menlo, Courier, monospace'
     print(f'label {{ font-family: {fonts}; padding: 6px 12px; position: absolute; }}')
     print(f'label {{ background-color: white; border: 1px solid; user-select: none; }}')
-    print('#display { margin: auto; max-width: 340px; }')
+
+    # arrange toggles in grid, hide by default
+    print('body { margin: auto; width: 340px; display: grid; }')
+    print('body { grid-template-columns: repeat(16, 1fr); }')
+    print('#display { grid-column-start: 1; grid-column-end: -1; }')
+    print('input[type="checkbox"] { display: none; }')
 
     # connect CSS variables to toggle states
     print(f'#display {{ --fp: initial; --fn: ; }}')
@@ -316,6 +320,9 @@ if __name__ == '__main__':
         print(f'#display {{ --Bt{i}_{j}p: initial; --Bt{i}_{j}n: ; }}')
         print(f'#At{i}_{j}:checked ~ #display {{ --At{i}_{j}p: ; --At{i}_{j}n: initial; }}')
         print(f'#Bt{i}_{j}:checked ~ #display {{ --Bt{i}_{j}p: ; --Bt{i}_{j}n: initial; }}')
+        if i in range(33):
+            print(f'#f:not(:checked) ~ #At{i}_{j} {{ display: inline; }}')
+            print(f'#f:checked ~ #Bt{i}_{j} {{ display: inline; }}')
 
     print('#display {')
     emit_sel(f'writev', f'Awv', f'Bwv', 'f', 16)
@@ -408,23 +415,6 @@ if __name__ == '__main__':
     resn2 = 'var(--op_3p, var(--op_2p, var(--op_1p, var(--op_0p, var(--zerop)))))'
     print(f'  --nowrite_7n: {resn1} {resn2};')
 
-    # connect RAM to svg display
-    dgrid = itertools.product(range(33), range(16))
-    for i, j in dgrid:
-        print(f'  --black{i}_{j}: var(--t{i}_{j}p) #000;')
-
-    """
-    for i in range(16):
-        print(f'  --black0_{i}: var(--t0_{i}p) #000;')
-        print(f'  --black1_{i}: var(--loc0_{i}p) #000;')
-        print(f'  --black2_{i}: var(--loc1_{i}p) #000;')
-        print(f'  --black3_{i}: var(--alu_cin_{i}p) #000;')
-        print(f'  --black4_{i}: var(--mov_{i}p) #000;')
-        print(f'  --black5_{i}: var(--sll_{i}p) #000;')
-        print(f'  --black6_{i}: var(--srl_{i}p) #000;')
-        print(f'  --black7_{i}: var(--outv_{i}p) #000;')
-    """
-
     # connect CPU output to label display
     for i in range(16):
         print(f'  --Ashow_wv_{i}: var(--fp) {xor_p("Awv", "outv", i)} inline;')
@@ -447,10 +437,6 @@ if __name__ == '__main__':
             print(f'  --Ashow{i}_{j}: var(--fp) {diffA} inline;')
             print(f'  --Bshow{i}_{j}: var(--fn) {diffB} inline;')
     print('}')
-
-    dgrid = itertools.product(range(33), range(16))
-    for i, j in dgrid:
-        print(f'#rect{i}_{j} {{ fill: var(--black{i}_{j}, #FFF); }}')
 
     print(f'#fl {{ display: inline; }}')
     for i in range(16):
