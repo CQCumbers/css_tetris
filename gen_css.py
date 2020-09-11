@@ -287,32 +287,28 @@ def emit_ram_out(out, mux, ramlen):
 
 
 if __name__ == '__main__':
-    # style and position labels
-    fonts = 'Consolas, "Liberation Mono", Menlo, Courier, monospace'
-    print(f'label {{ font-family: {fonts}; padding: 6px 12px; position: absolute; }}')
-    print(f'label {{ background-color: white; border: 1px solid; user-select: none; }}')
-
     # arrange toggles in grid, hide by default
-    print('body { margin: auto; width: 340px; display: grid; }')
-    print('body { grid-template-columns: repeat(16, 1fr); }')
-    print('#display { grid-column-start: 1; grid-column-end: -1; }')
+    fonts = 'Consolas, "Liberation Mono", Menlo, Courier, monospace'
+    print(f'body {{ font-family: {fonts}; margin: auto; width: 340px; margin-top: 32px; }}')
+    print('body { display: grid; grid-template-columns: repeat(16, 1fr); }')
     print('input[type="checkbox"] { display: none; }')
+    print('#display { grid-column-start: 1; grid-column-end: -1; }')
+
+    # style and position labels
+    print('label { padding: 6px 12px; margin-top: 12px }')
+    print('label { background-color: white; border: 1px solid; }')
+    print('label { position: absolute; left: 50%; transform: translateX(-50%); }')
+    print('label { -webkit-user-select: none; user-select: none; }')
 
     # connect CSS variables to toggle states
     print(f'#display {{ --fp: initial; --fn: ; }}')
     print(f'#f:checked ~ #display {{ --fp: ; --fn: initial; }}')
 
-    for i in range(16):
-        print(f'#display {{ --Awv_{i}p: initial; --Awv_{i}n: ; }}')
-        print(f'#display {{ --Bwv_{i}p: initial; --Bwv_{i}n: ; }}')
-        print(f'#Awv_{i}:checked ~ #display {{ --Awv_{i}p: ; --Awv_{i}n: initial; }}')
-        print(f'#Bwv_{i}:checked ~ #display {{ --Bwv_{i}p: ; --Bwv_{i}n: initial; }}')
-
-    for i in range(8):
-        print(f'#display {{ --Awl_{i}p: initial; --Awl_{i}n: ; }}')
-        print(f'#display {{ --Bwl_{i}p: initial; --Bwl_{i}n: ; }}')
-        print(f'#Awl_{i}:checked ~ #display {{ --Awl_{i}p: ; --Awl_{i}n: initial; }}')
-        print(f'#Bwl_{i}:checked ~ #display {{ --Bwl_{i}p: ; --Bwl_{i}n: initial; }}')
+    for i in range(9):
+        print(f'#display {{ --Apc_{i}p: initial; --Apc_{i}n: ; }}')
+        print(f'#display {{ --Bpc_{i}p: initial; --Bpc_{i}n: ; }}')
+        print(f'#Apc_{i}:checked ~ #display {{ --Apc_{i}p: ; --Apc_{i}n: initial; }}')
+        print(f'#Bpc_{i}:checked ~ #display {{ --Bpc_{i}p: ; --Bpc_{i}n: initial; }}')
 
     tgrid = itertools.product(range(71), range(16))
     for i, j in tgrid:
@@ -325,14 +321,13 @@ if __name__ == '__main__':
             print(f'#f:checked ~ #Bt{i}_{j} {{ display: inline; }}')
 
     print('#display {')
-    emit_sel(f'writev', f'Awv', f'Bwv', 'f', 16)
-    emit_sel(f'writel', f'Awl', f'Bwl', 'f', 16)
+    emit_sel('pc', f'Apc', f'Bpc', 'f', 9)
     for i in range(71):
         emit_sel(f't{i}', f'At{i}', f'Bt{i}', 'f', 16)
 
     # construct CPU components
     romlen = 291
-    emit_mux('fmux', 't0', 9, romlen)
+    emit_mux('fmux', 'pc', 9, romlen)
     emit_rom('tetris.qftasm', 'fmux')
     # move to within emit_rom
     outs = ['op_0', 'op_1', 'op_2', 'op_3']
@@ -361,19 +356,13 @@ if __name__ == '__main__':
     # read operand 2 (loc2)
     emit_mux('a2mux', 'addr2', 7, 71)
     emit_ram_out('a2A', 'a2mux', 71)
-    emit_sel('loc2', 'addr2', 'a2A', 'type2_0', 16)
+    emit_sel('loc2', 'addr2', 'a2A', 'type2_0', 7)
 
     # flip loc1 if opcode is SUB
     emit_mux('opmux', 'op', 4, 10, start=4)
     emit_flip('loc1f', 'loc1', 'op_0', 16)
     print(f'  --alu_cin_0p: var(--op_0p);')
     print(f'  --alu_cin_0n: var(--op_0n);')
-
-    for i in range(16):
-        print(f'  --test0_{i}p: initial;')
-        print(f'  --test1f_{i}p: /**/;')
-        print(f'  --test0_{i}n: /**/;')
-        print(f'  --test1f_{i}n: initial;')
 
     # emit ALU, shifter, and bitops
     mov_en = f'var(--op_3n) var(--op_2n) var(--op_1n)'
@@ -395,8 +384,7 @@ if __name__ == '__main__':
         print(f'  --outv_{i}p: {outp};')
         print(f'  --outv_{i}n: {outn};')
 
-    emit_inc('pc_out', 't0', 'pc_cin', 16)
-    emit_mux_pn('wmux', 'writel', 8, 71)
+    emit_inc('t0_out', 't0', 't0_cin', 16)
 
     # determine if operand 0 is zero
     print('  /* zero = (loc0 == 0) */')
@@ -406,30 +394,25 @@ if __name__ == '__main__':
     print(f'  --zerop: {resp};')
     print(f'  --zeron: {resn};')
 
-    # set nowrite_7 if MLZ/MNZ and condition fails
-    print('  /* nowrite = (MNZ && !zero) || (MLZ && !sign(loc0)) */')
+    # set loc2_7 if MLZ/MNZ and condition fails
+    print('  /* loc2_7 = (MNZ && !zero) || (MLZ && !sign(loc0)) */')
     resp1 = 'var(--op_3n) var(--op_2n) var(--op_1n)'
     resp2 = 'var(--op_0n, var(--loc0_15n)) var(--op_0p, var(--zeron))'
-    print(f'  --nowrite_7p: {resp1} {resp2};')
+    print(f'  --loc2_7p: {resp1} {resp2};')
     resn1 = 'var(--op_3p, var(--op_2p, var(--op_1p, var(--op_0n, var(--loc0_15p)))))'
     resn2 = 'var(--op_3p, var(--op_2p, var(--op_1p, var(--op_0p, var(--zerop)))))'
-    print(f'  --nowrite_7n: {resn1} {resn2};')
+    print(f'  --loc2_7n: {resn1} {resn2};')
+    emit_mux_pn('wmux', 'loc2', 8, 71)
 
     # connect CPU output to label display
-    for i in range(16):
-        print(f'  --Ashow_wv_{i}: var(--fp) {xor_p("Awv", "outv", i)} inline;')
-        print(f'  --Bshow_wv_{i}: var(--fn) {xor_p("Bwv", "outv", i)} inline;')
-
-    for i in range(7):
-        print(f'  --Ashow_wl_{i}: var(--fp) {xor_p("Awl", "loc2", i)} inline;')
-        print(f'  --Bshow_wl_{i}: var(--fn) {xor_p("Bwl", "loc2", i)} inline;')
-    print(f'  --Ashow_wl_7: var(--fp) {xor_p("Awl", "nowrite", 7)} inline;')
-    print(f'  --Bshow_wl_7: var(--fn) {xor_p("Bwl", "nowrite", 7)} inline;')
+    for i in range(9):
+        print(f'  --Ashow_pc_{i}: var(--fp) {xor_p("Apc", "t0", i)} inline;')
+        print(f'  --Bshow_pc_{i}: var(--fn) {xor_p("Bpc", "t0", i)} inline;')
 
     # write if wmux, copy from input state if not
     for i in range(71):
-        temp = f't{i}' if i != 0 else 'pc_out'
-        emit_sel(f'show{i}', temp, 'writev', f'wmux_{i}', 16)
+        temp = f't{i}' if i != 0 else 't0_out'
+        emit_sel(f'show{i}', temp, 'outv', f'wmux_{i}', 16)
         print(f'  /* Ashow{i} = fp && (At{i} ^ show{i}) */')
         for j in range(16):
             diffA = xor_p(f'At{i}', f'show{i}', j)
@@ -439,13 +422,9 @@ if __name__ == '__main__':
     print('}')
 
     print(f'#fl {{ display: inline; }}')
-    for i in range(16):
-        print(f'#Awvl_{i} {{ display: var(--Ashow_wv_{i}, none); }}')
-        print(f'#Bwvl_{i} {{ display: var(--Bshow_wv_{i}, none); }}')
-
-    for i in range(8):
-        print(f'#Awll_{i} {{ display: var(--Ashow_wl_{i}, none); }}')
-        print(f'#Bwll_{i} {{ display: var(--Bshow_wl_{i}, none); }}')
+    for i in range(9):
+        print(f'#Apcl_{i} {{ display: var(--Ashow_pc_{i}, none); }}')
+        print(f'#Bpcl_{i} {{ display: var(--Bshow_pc_{i}, none); }}')
 
     tgrid = itertools.product(range(71), range(16))
     for i, j in tgrid:

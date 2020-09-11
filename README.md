@@ -6,5 +6,4 @@ CSS Tetris uses the space-toggler hack, a way of expressing logical ANDs and ORs
 This project was inspired by CSS Sweeper, a minesweeper game written using the same tricks, but extends the concept further towards general computation, at the cost of practicality. It also owes a lot to the work of the Quest for Tetris team, who designed the processor and wrote the code that actually implements Tetris for it.
 
 ## Todo List
-- Fix indirect operand access (check pc=13)
 - Record timelapse of Tetris being played
