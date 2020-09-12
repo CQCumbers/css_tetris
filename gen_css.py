@@ -62,26 +62,6 @@ def emit_add(out, inp0, inp1, cin, n, alu_en):
         print(f'  --{cin}_{i + 1}p: var(--{gout}_{i}p, {resp});')
         print(f'  --{cin}_{i + 1}n: {and_n(inp0, inp1, i)} {and_n(pout, cin, i)};')
     
-    """
-    mid = 2
-    cina = f'{cin}A'
-    cinb = f'{cin}B'
-    print(f'  --{cina}_{mid}n: initial;')
-    print(f'  --{cina}_{mid}n: /**/;')
-    print(f'  --{cinb}_{mid}p: /**/;')
-    print(f'  --{cinb}_{mid}n: initial;')
-    for i in range(mid, n):
-        print(f'  --{cin}A_{i + 1}p: var(--{gout}_{i}p, {and_p(pout, cina, i)});')
-        print(f'  --{cin}A_{i + 1}n: {and_n(inp0, inp1, i)} {and_n(pout, cina, i)};')
-        print(f'  --{cin}B_{i + 1}p: var(--{gout}_{i}p, {and_p(pout, cinb, i)});')
-        print(f'  --{cin}B_{i + 1}n: {and_n(inp0, inp1, i)} {and_n(pout, cinb, i)};')
-
-    for i in range(mid):
-        print(f'  --{cin}_{i + 1}p: var(--{gout}_{i}p, {and_p(pout, cin, i)});')
-        print(f'  --{cin}_{i + 1}n: {and_n(inp0, inp1, i)} {and_n(pout, cin, i)};')
-    emit_sel(cin, cina, cinb, f'{cin}_{mid}', n, mid + 1);
-    """
-
     for i in range(n):
         print(f'  --{out}_{i}p: {xor_p(pout, cin, i)} {alu_en};')
         print(f'  --{out}_{i}n: {xor_n(pout, cin, i)} {alu_en};')
@@ -249,14 +229,6 @@ def emit_rom(filename, mux):
 def emit_rom_out(out, mux, romlen):
     # assumes emit_rom already called
     print(f'  /* {out} = rom[{mux}]_{out} */')
-    """
-    res_p = res_n = ''
-    for i in range(romlen):
-        res_p = f'var(--rom{i}_{out}p, {res_p})' if res_p else f'var(--rom{i}_{out}p)'
-        res_n = f'var(--rom{i}_{out}n, {res_n})' if res_n else f'var(--rom{i}_{out}n)'
-    print(f'  --{out}p: {res_p};')
-    print(f'  --{out}n: {res_n};')
-    """
     split_points = [32, 64, 96, 128, 160, 192, 224, 256, 290]
     resn2 = ''; resp2 = ''
     resp = ''; resn = ''
@@ -395,19 +367,19 @@ if __name__ == '__main__':
     print(f'  --zeron: {resn};')
 
     # set loc2_7 if MLZ/MNZ and condition fails
-    print('  /* loc2_7 = (MNZ && !zero) || (MLZ && !sign(loc0)) */')
+    print('  /* loc2_7 = (MNZ && zero) || (MLZ && !sign(loc0)) */')
     resp1 = 'var(--op_3n) var(--op_2n) var(--op_1n)'
-    resp2 = 'var(--op_0n, var(--loc0_15n)) var(--op_0p, var(--zeron))'
+    resp2 = 'var(--op_0n, var(--loc0_15n)) var(--op_0p, var(--zerop))'
     print(f'  --loc2_7p: {resp1} {resp2};')
     resn1 = 'var(--op_3p, var(--op_2p, var(--op_1p, var(--op_0n, var(--loc0_15p)))))'
-    resn2 = 'var(--op_3p, var(--op_2p, var(--op_1p, var(--op_0p, var(--zerop)))))'
+    resn2 = 'var(--op_3p, var(--op_2p, var(--op_1p, var(--op_0p, var(--zeron)))))'
     print(f'  --loc2_7n: {resn1} {resn2};')
     emit_mux_pn('wmux', 'loc2', 8, 71)
 
     # connect CPU output to label display
     for i in range(9):
-        print(f'  --Ashow_pc_{i}: var(--fp) {xor_p("Apc", "t0", i)} inline;')
-        print(f'  --Bshow_pc_{i}: var(--fn) {xor_p("Bpc", "t0", i)} inline;')
+        print(f'  --Ashow_pc_{i}: var(--fp) {xor_p("Apc", "t0_out", i)} inline;')
+        print(f'  --Bshow_pc_{i}: var(--fn) {xor_p("Bpc", "t0_out", i)} inline;')
 
     # write if wmux, copy from input state if not
     for i in range(71):
