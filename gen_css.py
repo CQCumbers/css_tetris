@@ -229,7 +229,8 @@ def emit_rom(filename, mux):
 def emit_rom_out(out, mux, romlen):
     # assumes emit_rom already called
     print(f'  /* {out} = rom[{mux}]_{out} */')
-    split_points = [32, 64, 96, 128, 160, 192, 224, 256, 290]
+    #split_points = [32, 64, 96, 128, 160, 192, 224, 256, 290]
+    split_points = [i * 16 for i in range(18)] + [290]
     resn2 = ''; resp2 = ''
     resp = ''; resn = ''
     for i in range(romlen):
